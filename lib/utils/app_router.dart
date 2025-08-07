@@ -8,6 +8,9 @@ import '../screens/dashboard_screen.dart';
 import '../screens/rooms/room_list_screen.dart';
 import '../screens/rooms/room_detail_screen.dart';
 import '../screens/rooms/room_form_screen.dart';
+import '../screens/dhcp/dhcp_list_screen.dart';
+import '../screens/dhcp/dhcp_detail_screen.dart';
+import '../screens/dhcp/dhcp_form_screen.dart';
 
 class AppRouter {
   static GoRouter createRouter(AuthProvider authProvider) {
@@ -108,6 +111,34 @@ class AppRouter {
           builder: (context, state) {
             final roomId = state.pathParameters['id']!;
             return RoomFormScreen(roomId: roomId);
+          },
+        ),
+        
+        // DHCP Management routes
+        GoRoute(
+          path: '/dhcp',
+          name: 'dhcp',
+          builder: (context, state) => const DhcpListScreen(),
+        ),
+        GoRoute(
+          path: '/dhcp/add',
+          name: 'dhcp_add',
+          builder: (context, state) => const DhcpFormScreen(),
+        ),
+        GoRoute(
+          path: '/dhcp/detail/:id',
+          name: 'dhcp_detail',
+          builder: (context, state) {
+            final leaseId = state.pathParameters['id']!;
+            return DhcpDetailScreen(leaseId: leaseId);
+          },
+        ),
+        GoRoute(
+          path: '/dhcp/edit/:id',
+          name: 'dhcp_edit',
+          builder: (context, state) {
+            final leaseId = state.pathParameters['id']!;
+            return DhcpFormScreen(leaseId: leaseId, isEditMode: true);
           },
         ),
       ],
