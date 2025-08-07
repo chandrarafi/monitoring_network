@@ -213,15 +213,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         context.push('/monitoring');
                       },
                     ),
-                    _buildActionCard(
-                      'API Testing',
-                      'Test API',
-                      Icons.bug_report,
-                      Colors.purple,
-                      () {
-                        // TODO: Navigate to API testing
-                      },
-                    ),
                   ],
                 ),
               ],
