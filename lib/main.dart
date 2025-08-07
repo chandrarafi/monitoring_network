@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/room_provider.dart';
 import 'utils/app_router.dart';
 import 'utils/constants.dart';
 
@@ -16,6 +17,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => AuthProvider()),
+        ChangeNotifierProvider(create: (context) => RoomProvider()),
       ],
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
