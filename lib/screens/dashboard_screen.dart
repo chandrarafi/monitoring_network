@@ -232,7 +232,7 @@ class DashboardScreen extends StatelessWidget {
                       Icons.settings_ethernet,
                       Colors.green,
                       () {
-                        // TODO: Navigate to DHCP control
+                        context.push('/dhcp');
                       },
                     ),
                     _buildActionCard(

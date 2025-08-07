@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 
 class ErrorMessageWidget extends StatelessWidget {
-  final String message;
+  final String? message;
   final VoidCallback? onDismiss;
 
   const ErrorMessageWidget({
     super.key,
-    required this.message,
+    this.message,
     this.onDismiss,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (message == null || message!.isEmpty) {
+      return const SizedBox.shrink();
+    }
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
@@ -29,8 +32,8 @@ class ErrorMessageWidget extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              message,
+            child:             Text(
+              message!,
               style: TextStyle(
                 color: Colors.red[700],
                 fontSize: 14,
