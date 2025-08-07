@@ -61,6 +61,50 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> put({
+    required String endpoint,
+    required Map<String, dynamic> body,
+    String? token,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+      final response = await http.put(
+        url,
+        headers: _getHeaders(token: token),
+        body: jsonEncode(body),
+      );
+
+      return _handleResponse(response);
+    } on SocketException {
+      throw Exception('Tidak ada koneksi internet');
+    } on HttpException {
+      throw Exception('Kesalahan HTTP');
+    } catch (e) {
+      throw Exception('Terjadi kesalahan: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> delete({
+    required String endpoint,
+    String? token,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+      final response = await http.delete(
+        url,
+        headers: _getHeaders(token: token),
+      );
+
+      return _handleResponse(response);
+    } on SocketException {
+      throw Exception('Tidak ada koneksi internet');
+    } on HttpException {
+      throw Exception('Kesalahan HTTP');
+    } catch (e) {
+      throw Exception('Terjadi kesalahan: $e');
+    }
+  }
+
   static Map<String, dynamic> _handleResponse(http.Response response) {
     final Map<String, dynamic> responseData = jsonDecode(response.body);
 

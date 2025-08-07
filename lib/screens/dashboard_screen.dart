@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../utils/constants.dart';
 
@@ -222,7 +223,7 @@ class DashboardScreen extends StatelessWidget {
                       Icons.room_preferences,
                       Colors.blue,
                       () {
-                        // TODO: Navigate to room management
+                        context.push('/rooms');
                       },
                     ),
                     _buildActionCard(

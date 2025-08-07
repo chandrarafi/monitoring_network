@@ -5,6 +5,9 @@ import '../providers/auth_provider.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/dashboard_screen.dart';
+import '../screens/rooms/room_list_screen.dart';
+import '../screens/rooms/room_detail_screen.dart';
+import '../screens/rooms/room_form_screen.dart';
 
 class AppRouter {
   static GoRouter createRouter(AuthProvider authProvider) {
@@ -78,6 +81,34 @@ class AppRouter {
           path: '/dashboard',
           name: 'dashboard',
           builder: (context, state) => const DashboardScreen(),
+        ),
+        
+        // Room Management routes
+        GoRoute(
+          path: '/rooms',
+          name: 'rooms',
+          builder: (context, state) => const RoomListScreen(),
+        ),
+        GoRoute(
+          path: '/rooms/create',
+          name: 'room_create',
+          builder: (context, state) => const RoomFormScreen(),
+        ),
+        GoRoute(
+          path: '/rooms/:id',
+          name: 'room_detail',
+          builder: (context, state) {
+            final roomId = state.pathParameters['id']!;
+            return RoomDetailScreen(roomId: roomId);
+          },
+        ),
+        GoRoute(
+          path: '/rooms/:id/edit',
+          name: 'room_edit',
+          builder: (context, state) {
+            final roomId = state.pathParameters['id']!;
+            return RoomFormScreen(roomId: roomId);
+          },
         ),
       ],
       errorBuilder: (context, state) {
