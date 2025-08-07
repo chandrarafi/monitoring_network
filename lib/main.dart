@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/room_provider.dart';
 import 'providers/dhcp_provider.dart';
+import 'providers/monitoring_provider.dart';
 import 'utils/app_router.dart';
 import 'utils/constants.dart';
 
@@ -20,6 +21,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => AuthProvider()),
         ChangeNotifierProvider(create: (context) => RoomProvider()),
         ChangeNotifierProvider(create: (context) => DhcpProvider()),
+        ChangeNotifierProvider(create: (context) => MonitoringProvider()),
       ],
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {

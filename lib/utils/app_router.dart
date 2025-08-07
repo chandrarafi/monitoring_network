@@ -11,6 +11,11 @@ import '../screens/rooms/room_form_screen.dart';
 import '../screens/dhcp/dhcp_list_screen.dart';
 import '../screens/dhcp/dhcp_detail_screen.dart';
 import '../screens/dhcp/dhcp_form_screen.dart';
+import '../screens/monitoring/monitoring_dashboard_screen.dart';
+import '../screens/monitoring/realtime_monitoring_screen.dart';
+import '../screens/monitoring/alerts_screen.dart';
+import '../screens/monitoring/room_detail_monitoring_screen.dart';
+import '../screens/monitoring/analytics_screen.dart';
 
 class AppRouter {
   static GoRouter createRouter(AuthProvider authProvider) {
@@ -139,6 +144,36 @@ class AppRouter {
           builder: (context, state) {
             final leaseId = state.pathParameters['id']!;
             return DhcpFormScreen(leaseId: leaseId, isEditMode: true);
+          },
+        ),
+        
+        // Network Monitoring routes
+        GoRoute(
+          path: '/monitoring',
+          name: 'monitoring_dashboard',
+          builder: (context, state) => const MonitoringDashboardScreen(),
+        ),
+        GoRoute(
+          path: '/monitoring/realtime',
+          name: 'monitoring_realtime',
+          builder: (context, state) => const RealtimeMonitoringScreen(),
+        ),
+        GoRoute(
+          path: '/monitoring/alerts',
+          name: 'monitoring_alerts',
+          builder: (context, state) => const AlertsScreen(),
+        ),
+        GoRoute(
+          path: '/monitoring/analytics',
+          name: 'monitoring_analytics',
+          builder: (context, state) => const AnalyticsScreen(),
+        ),
+        GoRoute(
+          path: '/monitoring/room/:id',
+          name: 'monitoring_room_detail',
+          builder: (context, state) {
+            final roomId = state.pathParameters['id']!;
+            return RoomDetailMonitoringScreen(roomId: roomId);
           },
         ),
       ],

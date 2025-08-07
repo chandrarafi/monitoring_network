@@ -246,6 +246,15 @@ class DhcpProvider with ChangeNotifier {
       if (response.success && response.data != null) {
         // Add new lease to the beginning of the list
         _dhcpLeases.insert(0, response.data!);
+        
+        // Auto sync to MikroTik after successful add
+        try {
+          await syncDhcpLeases();
+        } catch (e) {
+          // Don't fail the operation if sync fails, just log it
+          print('Auto sync after add failed: $e');
+        }
+        
         _setState(DhcpState.loaded);
         return true;
       } else {
@@ -286,6 +295,14 @@ class DhcpProvider with ChangeNotifier {
       if (response.success) {
         // Update lease in the list - need to refresh or construct updated lease
         await loadDhcpLeases(refresh: true);
+        
+        // Auto sync to MikroTik after successful update
+        try {
+          await syncDhcpLeases();
+        } catch (e) {
+          // Don't fail the operation if sync fails, just log it
+          print('Auto sync after update failed: $e');
+        }
         
         _setState(DhcpState.loaded);
         return DhcpUpdateResult(
