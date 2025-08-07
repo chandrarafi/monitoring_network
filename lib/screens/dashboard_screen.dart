@@ -2,10 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
+import '../providers/room_provider.dart';
+import '../providers/dhcp_provider.dart';
+import '../providers/monitoring_provider.dart';
 import '../utils/constants.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Load initial data
+      context.read<RoomProvider>().loadRooms();
+      context.read<DhcpProvider>().loadDhcpLeases();
+      context.read<MonitoringProvider>().loadDashboard();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -137,63 +156,13 @@ class DashboardScreen extends StatelessWidget {
                 
                 const SizedBox(height: 24),
                 
-                // Stats Cards
-                const Text(
-                  'Statistik Jaringan',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
+                // Network Monitoring Overview
+                _buildMonitoringOverview(),
                 
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
                 
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildStatCard(
-                        'Total Rooms',
-                        '0',
-                        Icons.room,
-                        Colors.orange,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildStatCard(
-                        'DHCP Leases',
-                        '0',
-                        Icons.network_check,
-                        Colors.green,
-                      ),
-                    ),
-                  ],
-                ),
-                
-                const SizedBox(height: 16),
-                
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildStatCard(
-                        'API Endpoints',
-                        '25+',
-                        Icons.api,
-                        Colors.purple,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildStatCard(
-                        'MikroTik Status',
-                        'Online',
-                        Icons.router,
-                        Colors.blue,
-                      ),
-                    ),
-                  ],
-                ),
+                // Network Statistics with Real Data
+                _buildNetworkStats(),
                 
                 const SizedBox(height: 24),
                 
@@ -241,7 +210,7 @@ class DashboardScreen extends StatelessWidget {
                       Icons.monitor,
                       Colors.orange,
                       () {
-                        // TODO: Navigate to network monitor
+                        context.push('/monitoring');
                       },
                     ),
                     _buildActionCard(
@@ -350,6 +319,295 @@ class DashboardScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildMonitoringOverview() {
+    return Consumer<MonitoringProvider>(
+      builder: (context, monitoringProvider, child) {
+        final dashboardData = monitoringProvider.dashboardData;
+        
+        if (dashboardData == null) {
+          return Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  const Icon(Icons.monitor, size: 48, color: Colors.grey),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Network Monitoring',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Loading monitoring data...',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () => context.push('/monitoring'),
+                    icon: const Icon(Icons.dashboard),
+                    label: const Text('View Dashboard'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.indigo,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final overview = dashboardData.overview;
+        return Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                colors: [Colors.indigo, Colors.indigo.shade700],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Network Monitoring Overview',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => context.push('/monitoring'),
+                      icon: const Icon(Icons.open_in_new, color: Colors.white),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                
+                // Overall Utilization
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Overall Network Utilization',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${overview.overallUtilization.toStringAsFixed(1)}%',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            '${overview.totalUsedIps}/${overview.totalIps} IPs used',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 4),
+                      ),
+                      child: CircularProgressIndicator(
+                        value: overview.overallUtilization / 100,
+                        backgroundColor: Colors.white.withOpacity(0.3),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          overview.overallUtilization >= 90 ? Colors.red :
+                          overview.overallUtilization >= 75 ? Colors.orange : Colors.green
+                        ),
+                        strokeWidth: 6,
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // Status Summary
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatusIndicator(
+                        'Critical', 
+                        overview.criticalRooms, 
+                        Colors.red,
+                        Icons.error,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildStatusIndicator(
+                        'Warning', 
+                        overview.warningRooms, 
+                        Colors.orange,
+                        Icons.warning,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildStatusIndicator(
+                        'Normal', 
+                        overview.normalRooms, 
+                        Colors.green,
+                        Icons.check_circle,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatusIndicator(String label, int count, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 4),
+          Text(
+            count.toString(),
+            style: TextStyle(
+              color: color,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 10,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNetworkStats() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Statistik Jaringan',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 16),
+        
+        Row(
+          children: [
+            Expanded(
+              child: Consumer<RoomProvider>(
+                builder: (context, roomProvider, child) {
+                  return _buildStatCard(
+                    'Total Rooms',
+                    roomProvider.rooms.length.toString(),
+                    Icons.meeting_room,
+                    Colors.blue,
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Consumer<DhcpProvider>(
+                builder: (context, dhcpProvider, child) {
+                  return _buildStatCard(
+                    'DHCP Leases',
+                    dhcpProvider.dhcpLeases.length.toString(),
+                    Icons.network_check,
+                    Colors.green,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+        
+        const SizedBox(height: 16),
+        
+        Row(
+          children: [
+            Expanded(
+              child: Consumer<DhcpProvider>(
+                builder: (context, dhcpProvider, child) {
+                  final activeLeases = dhcpProvider.dhcpLeases
+                      .where((lease) => lease.isActive)
+                      .length;
+                  return _buildStatCard(
+                    'Active Leases',
+                    activeLeases.toString(),
+                    Icons.device_hub,
+                    Colors.teal,
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Consumer<MonitoringProvider>(
+                builder: (context, monitoringProvider, child) {
+                  final alertsCount = monitoringProvider.totalAlerts;
+                  final color = monitoringProvider.totalCriticalAlerts > 0 
+                      ? Colors.red 
+                      : monitoringProvider.totalWarningAlerts > 0 
+                          ? Colors.orange 
+                          : Colors.green;
+                  return _buildStatCard(
+                    'Network Alerts',
+                    alertsCount.toString(),
+                    Icons.notifications,
+                    color,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

@@ -188,7 +188,7 @@ class _DhcpFormScreenState extends State<DhcpFormScreen> {
           
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('$icon ${_updateResult!.statusMessage}'),
+              content: Text('$icon ${_updateResult!.statusMessage} (otomatis disinkronisasi)'),
               backgroundColor: color,
               duration: const Duration(seconds: 4),
             ),
@@ -209,11 +209,12 @@ class _DhcpFormScreenState extends State<DhcpFormScreen> {
             });
           }
         } else {
-          // Create success message
+          // Create success message with auto sync info
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('✅ DHCP lease berhasil ditambahkan'),
+              content: Text('✅ DHCP lease berhasil ditambahkan dan disinkronisasi ke MikroTik'),
               backgroundColor: Colors.green,
+              duration: Duration(seconds: 4),
             ),
           );
         }
