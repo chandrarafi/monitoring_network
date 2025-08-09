@@ -483,18 +483,88 @@ class DhcpProvider with ChangeNotifier {
   String _cleanErrorMessage(String error) {
     String cleanError = error;
     
-    if (cleanError.startsWith('Exception: ')) {
-      cleanError = cleanError.substring(11);
-    }
-    
-    if (cleanError.contains('gagal: Exception: ')) {
-      cleanError = cleanError.split('gagal: Exception: ').last;
-    }
-    
+    // Remove multiple "Exception:" prefixes
     while (cleanError.startsWith('Exception: ')) {
       cleanError = cleanError.substring(11);
     }
     
-    return cleanError.trim();
+    // Remove "gagal: Exception:" pattern
+    if (cleanError.contains('gagal: Exception: ')) {
+      cleanError = cleanError.split('gagal: Exception: ').last;
+    }
+    
+    // Remove common error prefixes
+    final prefixesToRemove = [
+      'Terjadi kesalahan: ',
+      'Gagal menambahkan DHCP lease: ',
+      'Gagal mengambil DHCP lease berdasarkan IP: ',
+      'Gagal mengambil DHCP lease berdasarkan MAC: ',
+      'Gagal mengupdate DHCP lease: ',
+      'Gagal menghapus DHCP lease: ',
+    ];
+    
+    for (final prefix in prefixesToRemove) {
+      if (cleanError.startsWith(prefix)) {
+        cleanError = cleanError.substring(prefix.length);
+        break;
+      }
+    }
+    
+    // Handle HTML response errors (server returning HTML instead of JSON)
+    if (cleanError.contains('FormatException: Unexpected character') ||
+        cleanError.contains('</html>') ||
+        cleanError.contains('<html>') ||
+        cleanError.contains('<!DOCTYPE')) {
+      return 'Server sedang bermasalah. Silakan coba lagi dalam beberapa saat';
+    }
+    
+    // Handle JSON parsing errors
+    if (cleanError.toLowerCase().contains('formatexception') ||
+        cleanError.toLowerCase().contains('unexpected character')) {
+      return 'Server mengembalikan response yang tidak valid';
+    }
+    
+    // Handle specific error patterns
+    if (cleanError.toLowerCase().contains('duplicate entry') || 
+        cleanError.toLowerCase().contains('unique constraint')) {
+      if (cleanError.toLowerCase().contains('address')) {
+        return 'IP Address sudah digunakan';
+      }
+      if (cleanError.toLowerCase().contains('mac_address')) {
+        return 'MAC Address sudah digunakan';
+      }
+      return 'Data sudah ada dalam database';
+    }
+    
+    // Handle HTTP status errors
+    if (cleanError.contains('401') || cleanError.toLowerCase().contains('unauthorized')) {
+      return 'Session expired. Silakan login kembali';
+    }
+    
+    if (cleanError.contains('403') || cleanError.toLowerCase().contains('forbidden')) {
+      return 'Tidak memiliki akses untuk operasi ini';
+    }
+    
+    if (cleanError.contains('404') || cleanError.toLowerCase().contains('not found')) {
+      return 'Endpoint tidak ditemukan';
+    }
+    
+    if (cleanError.contains('500') || cleanError.toLowerCase().contains('internal server error')) {
+      return 'Server error. Silakan coba lagi nanti';
+    }
+    
+    // Handle 422 validation errors
+    if (cleanError.contains('422') || cleanError.toLowerCase().contains('validation')) {
+      return 'Data tidak valid atau sudah ada';
+    }
+    
+    // Handle connection errors
+    if (cleanError.toLowerCase().contains('connection') ||
+        cleanError.toLowerCase().contains('network') ||
+        cleanError.toLowerCase().contains('timeout')) {
+      return 'Koneksi bermasalah, silakan coba lagi';
+    }
+    
+    return cleanError.trim().isEmpty ? 'Terjadi kesalahan tidak diketahui' : cleanError.trim();
   }
 }
