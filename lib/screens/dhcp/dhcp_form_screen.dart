@@ -346,7 +346,7 @@ class _DhcpFormScreenState extends State<DhcpFormScreen> {
           );
         }
         
-        context.go('/dhcp'); // Navigate back to DHCP list
+        context.pop(); // Navigate back to previous screen
       } else {
         // Show more detailed error message
         final errorMessage = widget.isEditMode && _updateResult != null

@@ -122,8 +122,8 @@ class _DhcpDetailScreenState extends State<DhcpDetailScreen> {
               });
             }
             
-            // Kembali ke DHCP list
-            context.go('/dhcp');
+            // Kembali ke halaman sebelumnya
+            context.pop();
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
