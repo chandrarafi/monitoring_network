@@ -5,6 +5,7 @@ import '../../providers/dhcp_provider.dart';
 import '../../providers/room_provider.dart';
 import '../../models/dhcp_lease.dart';
 import '../../models/room.dart';
+import '../../utils/responsive_helper.dart';
 import '../../widgets/error_message_widget.dart';
 
 class DhcpListScreen extends StatefulWidget {
