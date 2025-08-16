@@ -56,8 +56,8 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       backgroundColor: Colors.green,
                     ),
                   );
-                  // Kembali ke room list screen
-                  context.go('/rooms');
+                  // Kembali ke halaman sebelumnya
+                  context.pop();
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
