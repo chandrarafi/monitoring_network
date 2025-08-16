@@ -125,10 +125,137 @@ class _DhcpFormScreenState extends State<DhcpFormScreen> {
     return null;
   }
 
+  Future<String?> _validateForDuplicates() async {
+    final dhcpProvider = context.read<DhcpProvider>();
+    final ipAddress = _addressController.text.trim();
+    final macAddress = _macAddressController.text.trim();
+    
+    try {
+      // Check existing leases in current provider data first (faster)
+      final existingLeases = dhcpProvider.dhcpLeases;
+      
+      // Check for duplicate IP in loaded data
+      final ipMatches = existingLeases.where((lease) => 
+        lease.address == ipAddress && lease.id != _currentLease?.id);
+      if (ipMatches.isNotEmpty) {
+        final existingIpLease = ipMatches.first;
+        return 'IP Address $ipAddress sudah digunakan oleh lease lain (MAC: ${existingIpLease.macAddress})';
+      }
+      
+      // Check for duplicate MAC in loaded data
+      final macMatches = existingLeases.where((lease) => 
+        lease.macAddress.toLowerCase() == macAddress.toLowerCase() && lease.id != _currentLease?.id);
+      if (macMatches.isNotEmpty) {
+        final existingMacLease = macMatches.first;
+        return 'MAC Address $macAddress sudah digunakan oleh lease lain (IP: ${existingMacLease.address})';
+      }
+      
+      return null; // No duplicates found
+    } catch (e) {
+      // If validation fails, allow the submit to proceed and let server handle it
+      print('Duplicate validation failed: $e');
+      return null;
+    }
+  }
+
+  String _getCleanErrorMessage(String errorMessage) {
+    String cleanMessage = errorMessage;
+    
+    // Remove nested "Exception:" prefixes
+    while (cleanMessage.startsWith('Exception: ')) {
+      cleanMessage = cleanMessage.substring(11);
+    }
+    
+    // Remove common prefixes
+    final prefixesToRemove = [
+      'Gagal menambahkan DHCP lease: ',
+      'Gagal mengambil DHCP lease berdasarkan IP: ',
+      'Gagal mengambil DHCP lease berdasarkan MAC: ',
+      'Terjadi kesalahan: ',
+    ];
+    
+    for (final prefix in prefixesToRemove) {
+      if (cleanMessage.startsWith(prefix)) {
+        cleanMessage = cleanMessage.substring(prefix.length);
+        break;
+      }
+    }
+    
+    // Handle HTML response errors (server returning HTML instead of JSON)
+    if (cleanMessage.contains('FormatException: Unexpected character') ||
+        cleanMessage.contains('</html>') ||
+        cleanMessage.contains('<html>')) {
+      return 'Server sedang bermasalah. Silakan coba lagi dalam beberapa saat';
+    }
+    
+    // Handle JSON parsing errors
+    if (cleanMessage.toLowerCase().contains('formatexception') ||
+        cleanMessage.toLowerCase().contains('unexpected character')) {
+      return 'Server mengembalikan response yang tidak valid. Silakan coba lagi';
+    }
+    
+    // Handle common database constraint errors
+    if (cleanMessage.toLowerCase().contains('duplicate') || 
+        cleanMessage.toLowerCase().contains('unique constraint')) {
+      if (cleanMessage.toLowerCase().contains('address')) {
+        return 'IP Address sudah digunakan oleh lease lain';
+      }
+      if (cleanMessage.toLowerCase().contains('mac_address')) {
+        return 'MAC Address sudah digunakan oleh lease lain';
+      }
+      return 'Data sudah ada. Silakan gunakan IP Address atau MAC Address yang berbeda';
+    }
+    
+    // Handle HTTP status errors
+    if (cleanMessage.contains('401') || cleanMessage.toLowerCase().contains('unauthorized')) {
+      return 'Session expired. Silakan login kembali';
+    }
+    
+    if (cleanMessage.contains('403') || cleanMessage.toLowerCase().contains('forbidden')) {
+      return 'Tidak memiliki akses untuk operasi ini';
+    }
+    
+    if (cleanMessage.contains('404') || cleanMessage.toLowerCase().contains('not found')) {
+      return 'Endpoint tidak ditemukan. Silakan hubungi administrator';
+    }
+    
+    if (cleanMessage.contains('500') || cleanMessage.toLowerCase().contains('internal server error')) {
+      return 'Server error. Silakan coba lagi nanti';
+    }
+    
+    // Handle connection errors
+    if (cleanMessage.toLowerCase().contains('connection') ||
+        cleanMessage.toLowerCase().contains('network') ||
+        cleanMessage.toLowerCase().contains('timeout')) {
+      return 'Koneksi bermasalah. Silakan coba lagi';
+    }
+    
+    // Default cleaned message
+    return cleanMessage.isNotEmpty ? cleanMessage : 'Terjadi kesalahan tidak diketahui';
+  }
+
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
     final dhcpProvider = context.read<DhcpProvider>();
+    
+    // Validate for duplicates before submitting (only for new leases)
+    if (!widget.isEditMode) {
+      // Show loading indicator while validating
+      dhcpProvider.clearError();
+      
+      final duplicateValidationResult = await _validateForDuplicates();
+      if (duplicateValidationResult != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ $duplicateValidationResult'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+        return;
+      }
+    }
     
     bool success;
     
@@ -225,13 +352,17 @@ class _DhcpFormScreenState extends State<DhcpFormScreen> {
         final errorMessage = widget.isEditMode && _updateResult != null
             ? _updateResult!.statusMessage
             : dhcpProvider.errorMessage ?? "Unknown error";
+        
+        // Clean up the error message for better user experience
+        String cleanErrorMessage = _getCleanErrorMessage(errorMessage);
             
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(widget.isEditMode 
-                ? '❌ Gagal memperbarui DHCP lease: $errorMessage'
-                : '❌ Gagal menambahkan DHCP lease: $errorMessage'),
+                ? '❌ Gagal memperbarui DHCP lease: $cleanErrorMessage'
+                : '❌ Gagal menambahkan DHCP lease: $cleanErrorMessage'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }

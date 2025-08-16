@@ -6,6 +6,7 @@ import '../providers/room_provider.dart';
 import '../providers/dhcp_provider.dart';
 import '../providers/monitoring_provider.dart';
 import '../utils/constants.dart';
+import '../utils/responsive_helper.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -100,122 +101,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
+          final padding = ResponsiveHelper.getResponsivePadding(
+            context,
+            mobileHorizontal: 12,
+            mobileVertical: 16,
+            tabletHorizontal: 20,
+            tabletVertical: 20,
+          );
+          
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Welcome Card
-                Card(
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      gradient: LinearGradient(
-                        colors: [Colors.blue, Colors.blue.shade700],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Selamat Datang!',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          authProvider.user?.name ?? 'User',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            color: Colors.white70,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          authProvider.user?.email ?? '',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.white60,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Network Monitoring Overview
-                _buildMonitoringOverview(),
-                
-                const SizedBox(height: 24),
-                
-                // Network Statistics with Real Data
-                _buildNetworkStats(),
-                
-                const SizedBox(height: 24),
-                
-                // Quick Actions
-                const Text(
-                  'Aksi Cepat',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 1.2,
-                  children: [
-                    _buildActionCard(
-                      'Room Management',
-                      'Kelola ruangan',
-                      Icons.room_preferences,
-                      Colors.blue,
-                      () {
-                        context.push('/rooms');
-                      },
-                    ),
-                    _buildActionCard(
-                      'DHCP Control',
-                      'Kontrol DHCP',
-                      Icons.settings_ethernet,
-                      Colors.green,
-                      () {
-                        context.push('/dhcp');
-                      },
-                    ),
-                    _buildActionCard(
-                      'Network Monitor',
-                      'Monitor jaringan',
-                      Icons.monitor,
-                      Colors.orange,
-                      () {
-                        context.push('/monitoring');
-                      },
-                    ),
-                  ],
-                ),
-              ],
+            padding: padding,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: ResponsiveHelper.getMaxWidth(context),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Welcome Card
+                  _buildWelcomeCard(authProvider),
+                  
+                  SizedBox(height: ResponsiveHelper.getSpacing(
+                    context,
+                    mobile: 16,
+                    tablet: 20,
+                    desktop: 24,
+                  )),
+                  
+                  // Network Monitoring Overview
+                  _buildMonitoringOverview(),
+                  
+                  SizedBox(height: ResponsiveHelper.getSpacing(
+                    context,
+                    mobile: 16,
+                    tablet: 20,
+                    desktop: 24,
+                  )),
+                  
+                  // Network Statistics with Real Data
+                  _buildNetworkStats(),
+                  
+                  SizedBox(height: ResponsiveHelper.getSpacing(
+                    context,
+                    mobile: 16,
+                    tablet: 20,
+                    desktop: 24,
+                  )),
+                  
+                  // Quick Actions
+                  _buildQuickActionsSection(),
+                ],
+              ),
             ),
           );
         },
@@ -223,37 +159,252 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildWelcomeCard(AuthProvider authProvider) {
+    final titleFontSize = ResponsiveHelper.getResponsiveFontSize(
+      context,
+      mobile: 20,
+      tablet: 24,
+      desktop: 28,
+    );
+    final nameFontSize = ResponsiveHelper.getResponsiveFontSize(
+      context,
+      mobile: 16,
+      tablet: 18,
+      desktop: 20,
+    );
+    final emailFontSize = ResponsiveHelper.getResponsiveFontSize(
+      context,
+      mobile: 12,
+      tablet: 14,
+      desktop: 16,
+    );
+    final cardPadding = ResponsiveHelper.getResponsivePadding(
+      context,
+      mobileHorizontal: 16,
+      mobileVertical: 16,
+      tabletHorizontal: 20,
+      tabletVertical: 20,
+    );
+    final borderRadius = ResponsiveHelper.getBorderRadius(
+      context,
+      mobile: 8,
+      tablet: 12,
+      desktop: 16,
+    );
+
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: ResponsiveHelper.getCardElevation(context),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(borderRadius),
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: cardPadding,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(borderRadius),
+          gradient: LinearGradient(
+            colors: [Colors.blue, Colors.blue.shade700],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Selamat Datang!',
+              style: TextStyle(
+                fontSize: titleFontSize,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(height: ResponsiveHelper.getSpacing(context, mobile: 6, tablet: 8)),
+            Text(
+              authProvider.user?.name ?? 'User',
+              style: TextStyle(
+                fontSize: nameFontSize,
+                color: Colors.white70,
+              ),
+            ),
+            SizedBox(height: ResponsiveHelper.getSpacing(context, mobile: 2, tablet: 4)),
+            Text(
+              authProvider.user?.email ?? '',
+              style: TextStyle(
+                fontSize: emailFontSize,
+                color: Colors.white60,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionsSection() {
+    final titleFontSize = ResponsiveHelper.getResponsiveFontSize(
+      context,
+      mobile: 18,
+      tablet: 20,
+      desktop: 22,
+    );
+    final crossAxisCount = ResponsiveHelper.getGridCrossAxisCount(
+      context,
+      mobile: context.isVerySmallScreen 
+          ? 1 
+          : context.screenWidth < 380 
+              ? 1 
+              : 2,
+      tablet: 3,
+      desktop: 4,
+    );
+    final spacing = ResponsiveHelper.getSpacing(
+      context,
+      mobile: 12,
+      tablet: 16,
+      desktop: 20,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Aksi Cepat',
+          style: TextStyle(
+            fontSize: titleFontSize,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        SizedBox(height: spacing),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: crossAxisCount,
+          crossAxisSpacing: spacing,
+          mainAxisSpacing: spacing,
+          childAspectRatio: crossAxisCount == 1 
+              ? 4.5 
+              : ResponsiveHelper.getGridChildAspectRatio(
+                  context,
+                  verySmall: 3.5,
+                  small: 1.05,
+                  normal: 1.15,
+                ),
+          children: [
+            _buildActionCard(
+              context.isVerySmallScreen || context.screenWidth < 380 
+                  ? 'Room' 
+                  : 'Room Management',
+              'Kelola ruangan',
+              Icons.room_preferences,
+              Colors.blue,
+              () {
+                context.push('/rooms');
+              },
+              crossAxisCount,
+            ),
+            _buildActionCard(
+              context.isVerySmallScreen || context.screenWidth < 380 
+                  ? 'DHCP' 
+                  : 'DHCP Control',
+              'Kontrol DHCP',
+              Icons.settings_ethernet,
+              Colors.green,
+              () {
+                context.push('/dhcp');
+              },
+              crossAxisCount,
+            ),
+            _buildActionCard(
+              context.isVerySmallScreen || context.screenWidth < 380 
+                  ? 'Monitor' 
+                  : 'Network Monitor',
+              'Monitor jaringan',
+              Icons.monitor,
+              Colors.orange,
+              () {
+                context.push('/monitoring');
+              },
+              crossAxisCount,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    final iconSize = ResponsiveHelper.getIconSize(
+      context,
+      mobile: 20,
+      tablet: 24,
+      desktop: 28,
+    );
+    final valueFontSize = ResponsiveHelper.getResponsiveFontSize(
+      context,
+      mobile: 20,
+      tablet: 24,
+      desktop: 28,
+    );
+    final titleFontSize = ResponsiveHelper.getResponsiveFontSize(
+      context,
+      mobile: 12,
+      tablet: 14,
+      desktop: 16,
+    );
+    final cardPadding = ResponsiveHelper.getResponsivePadding(
+      context,
+      mobileHorizontal: 12,
+      mobileVertical: 12,
+      tabletHorizontal: 16,
+      tabletVertical: 16,
+    );
+    final borderRadius = ResponsiveHelper.getBorderRadius(
+      context,
+      mobile: 8,
+      tablet: 10,
+      desktop: 12,
+    );
+
+    return Card(
+      elevation: ResponsiveHelper.getCardElevation(context),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: cardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(icon, color: color, size: 24),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: color,
+                Icon(icon, color: color, size: iconSize),
+                Flexible(
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: valueFontSize,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: ResponsiveHelper.getSpacing(context, mobile: 6, tablet: 8)),
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 14,
+              style: TextStyle(
+                fontSize: titleFontSize,
                 color: Colors.grey,
                 fontWeight: FontWeight.w500,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -267,47 +418,177 @@ class _DashboardScreenState extends State<DashboardScreen> {
     IconData icon,
     Color color,
     VoidCallback onTap,
+    int crossAxisCount,
   ) {
+    final iconSize = ResponsiveHelper.getIconSize(
+      context,
+      mobile: context.isVerySmallScreen 
+          ? 18 
+          : context.screenWidth < 380 
+              ? 20 
+              : context.screenWidth < 420
+                  ? 22
+                  : 24,
+      tablet: 28,
+      desktop: 32,
+    );
+    final titleFontSize = ResponsiveHelper.getResponsiveFontSize(
+      context,
+      mobile: context.isVerySmallScreen 
+          ? 9 
+          : context.screenWidth < 380 
+              ? 10 
+              : context.screenWidth < 420
+                  ? 11
+                  : 12,
+      tablet: 14,
+      desktop: 16,
+    );
+    final subtitleFontSize = ResponsiveHelper.getResponsiveFontSize(
+      context,
+      mobile: context.isVerySmallScreen 
+          ? 8 
+          : context.screenWidth < 380 
+              ? 9 
+              : context.screenWidth < 420
+                  ? 10
+                  : 11,
+      tablet: 12,
+      desktop: 14,
+    );
+    final cardPadding = ResponsiveHelper.getResponsivePadding(
+      context,
+      mobileHorizontal: context.isVerySmallScreen 
+          ? 6 
+          : context.screenWidth < 380 
+              ? 8 
+              : 12,
+      mobileVertical: context.isVerySmallScreen 
+          ? 6 
+          : context.screenWidth < 380 
+              ? 8 
+              : 12,
+      tabletHorizontal: 16,
+      tabletVertical: 16,
+    );
+    final borderRadius = ResponsiveHelper.getBorderRadius(
+      context,
+      mobile: 6,
+      tablet: 8,
+      desktop: 12,
+    );
+    final iconContainerSize = ResponsiveHelper.getResponsiveValue(
+      context,
+      mobile: context.isVerySmallScreen 
+          ? 4 
+          : context.screenWidth < 380 
+              ? 5 
+              : context.screenWidth < 420
+                  ? 6
+                  : 8,
+      tablet: 10,
+      desktop: 12,
+    );
+
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: ResponsiveHelper.getCardElevation(context),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(borderRadius),
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+          padding: cardPadding,
+          child: crossAxisCount == 1 || context.isVerySmallScreen
+            ? Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(iconContainerSize),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(iconContainerSize),
+                    ),
+                    child: Icon(icon, color: color, size: iconSize),
+                  ),
+                  SizedBox(width: ResponsiveHelper.getSpacing(
+                    context, 
+                    mobile: context.isVerySmallScreen ? 8 : 12,
+                  )),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: titleFontSize,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                          maxLines: crossAxisCount == 1 ? 1 : 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: ResponsiveHelper.getSpacing(
+                          context, 
+                          mobile: context.isVerySmallScreen ? 1 : 2,
+                        )),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontSize: subtitleFontSize,
+                            color: Colors.grey,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(iconContainerSize),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(iconContainerSize),
+                      ),
+                      child: Icon(icon, color: color, size: iconSize),
+                    ),
+                    SizedBox(height: ResponsiveHelper.getSpacing(
+                      context, 
+                      mobile: context.isVerySmallScreen ? 6 : 8, 
+                      tablet: 12,
+                    )),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: titleFontSize,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: context.isVerySmallScreen ? 1 : 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: ResponsiveHelper.getSpacing(
+                      context, 
+                      mobile: context.isVerySmallScreen ? 2 : 4,
+                    )),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: subtitleFontSize,
+                        color: Colors.grey,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                child: Icon(icon, color: color, size: 32),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -515,86 +796,94 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildNetworkStats() {
+    final titleFontSize = ResponsiveHelper.getResponsiveFontSize(
+      context,
+      mobile: 18,
+      tablet: 20,
+      desktop: 22,
+    );
+    final spacing = ResponsiveHelper.getSpacing(
+      context,
+      mobile: 12,
+      tablet: 16,
+      desktop: 20,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Statistik Jaringan',
           style: TextStyle(
-            fontSize: 20,
+            fontSize: titleFontSize,
             fontWeight: FontWeight.bold,
             color: Colors.black87,
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: spacing),
         
-        Row(
+        // Use GridView for better responsiveness
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: context.isVerySmallScreen ? 1 : 2,
+          crossAxisSpacing: spacing,
+          mainAxisSpacing: spacing,
+          childAspectRatio: ResponsiveHelper.getGridChildAspectRatio(
+            context,
+            verySmall: 2.5,
+            small: 1.8,
+            normal: 2.0,
+          ),
           children: [
-            Expanded(
-              child: Consumer<RoomProvider>(
-                builder: (context, roomProvider, child) {
-                  return _buildStatCard(
-                    'Total Rooms',
-                    roomProvider.rooms.length.toString(),
-                    Icons.meeting_room,
-                    Colors.blue,
-                  );
-                },
-              ),
+            Consumer<RoomProvider>(
+              builder: (context, roomProvider, child) {
+                return _buildStatCard(
+                  'Total Rooms',
+                  roomProvider.rooms.length.toString(),
+                  Icons.meeting_room,
+                  Colors.blue,
+                );
+              },
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Consumer<DhcpProvider>(
-                builder: (context, dhcpProvider, child) {
-                  return _buildStatCard(
-                    'DHCP Leases',
-                    dhcpProvider.dhcpLeases.length.toString(),
-                    Icons.network_check,
-                    Colors.green,
-                  );
-                },
-              ),
+            Consumer<DhcpProvider>(
+              builder: (context, dhcpProvider, child) {
+                return _buildStatCard(
+                  'DHCP Leases',
+                  dhcpProvider.dhcpLeases.length.toString(),
+                  Icons.network_check,
+                  Colors.green,
+                );
+              },
             ),
-          ],
-        ),
-        
-        const SizedBox(height: 16),
-        
-        Row(
-          children: [
-            Expanded(
-              child: Consumer<DhcpProvider>(
-                builder: (context, dhcpProvider, child) {
-                  final activeLeases = dhcpProvider.dhcpLeases
-                      .where((lease) => lease.isActive)
-                      .length;
-                  return _buildStatCard(
-                    'Active Leases',
-                    activeLeases.toString(),
-                    Icons.device_hub,
-                    Colors.teal,
-                  );
-                },
-              ),
+            Consumer<DhcpProvider>(
+              builder: (context, dhcpProvider, child) {
+                final activeLeases = dhcpProvider.dhcpLeases
+                    .where((lease) => lease.isActive)
+                    .length;
+                return _buildStatCard(
+                  'Active Leases',
+                  activeLeases.toString(),
+                  Icons.device_hub,
+                  Colors.teal,
+                );
+              },
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Consumer<MonitoringProvider>(
-                builder: (context, monitoringProvider, child) {
-                  final alertsCount = monitoringProvider.totalAlerts;
-                  final color = monitoringProvider.totalCriticalAlerts > 0 
-                      ? Colors.red 
-                      : monitoringProvider.totalWarningAlerts > 0 
-                          ? Colors.orange 
-                          : Colors.green;
-                  return _buildStatCard(
-                    'Network Alerts',
-                    alertsCount.toString(),
-                    Icons.notifications,
-                    color,
-                  );
-                },
-              ),
+            Consumer<MonitoringProvider>(
+              builder: (context, monitoringProvider, child) {
+                final alertsCount = monitoringProvider.totalAlerts;
+                final color = monitoringProvider.totalCriticalAlerts > 0 
+                    ? Colors.red 
+                    : monitoringProvider.totalWarningAlerts > 0 
+                        ? Colors.orange 
+                        : Colors.green;
+                return _buildStatCard(
+                  'Network Alerts',
+                  alertsCount.toString(),
+                  Icons.notifications,
+                  color,
+                );
+              },
             ),
           ],
         ),

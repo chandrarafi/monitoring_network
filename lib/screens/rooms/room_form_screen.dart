@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/room_provider.dart';
 import '../../models/room.dart';
+import '../../utils/responsive_helper.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/error_message_widget.dart';
@@ -195,110 +196,127 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
             );
           }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Error Message
-                  if (roomProvider.hasError)
-                    ErrorMessageWidget(
-                      message: roomProvider.errorMessage ?? 'Terjadi kesalahan',
-                      onDismiss: () {
-                        roomProvider.clearError();
-                      },
-                    ),
+          final padding = ResponsiveHelper.getResponsivePadding(
+            context,
+            mobileHorizontal: context.isVerySmallScreen ? 12 : 16,
+            mobileVertical: 16,
+            tabletHorizontal: 24,
+            tabletVertical: 20,
+          );
 
-                  // Basic Information Card
-                  _buildCard(
-                    'Informasi Dasar',
-                    [
-                      CustomTextField(
-                        label: 'Nama Ruangan *',
-                        controller: _nameController,
-                        prefixIcon: Icons.room,
-                        validator: (value) => _validateRequired(value, 'Nama ruangan'),
-                      ),
-                      const SizedBox(height: 16),
-                      CustomTextField(
-                        label: 'Deskripsi',
-                        controller: _descriptionController,
-                        prefixIcon: Icons.description,
-                        keyboardType: TextInputType.multiline,
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          const Text(
-                            'Status Ruangan',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black87,
-                            ),
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: ResponsiveHelper.getMaxWidth(context),
+              ),
+              child: SingleChildScrollView(
+                padding: padding,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Error Message
+                      if (roomProvider.hasError)
+                        Padding(
+                          padding: EdgeInsets.only(
+                            bottom: ResponsiveHelper.getSpacing(context, mobile: 16),
                           ),
-                          const Spacer(),
-                          Switch(
-                            value: _isActive,
-                            onChanged: (value) {
-                              setState(() {
-                                _isActive = value;
-                              });
+                          child: ErrorMessageWidget(
+                            message: roomProvider.errorMessage ?? 'Terjadi kesalahan',
+                            onDismiss: () {
+                              roomProvider.clearError();
                             },
-                            activeColor: Colors.green,
                           ),
-                          Text(
-                            _isActive ? 'Aktif' : 'Tidak Aktif',
-                            style: TextStyle(
-                              color: _isActive ? Colors.green : Colors.red,
-                              fontWeight: FontWeight.w500,
-                            ),
+                        ),
+
+                      // Basic Information Card
+                      _buildCard(
+                        'Informasi Dasar',
+                        [
+                          CustomTextField(
+                            label: 'Nama Ruangan *',
+                            controller: _nameController,
+                            prefixIcon: Icons.room,
+                            validator: (value) => _validateRequired(value, 'Nama ruangan'),
+                          ),
+                          SizedBox(height: ResponsiveHelper.getSpacing(
+                            context,
+                            mobile: 12,
+                            tablet: 16,
+                          )),
+                          CustomTextField(
+                            label: 'Deskripsi',
+                            controller: _descriptionController,
+                            prefixIcon: Icons.description,
+                            keyboardType: TextInputType.multiline,
+                            maxLines: 3,
+                          ),
+                          SizedBox(height: ResponsiveHelper.getSpacing(
+                            context,
+                            mobile: 12,
+                            tablet: 16,
+                          )),
+                          _buildStatusToggle(),
+                        ],
+                      ),
+
+                      SizedBox(height: ResponsiveHelper.getSpacing(
+                        context,
+                        mobile: 16,
+                        tablet: 20,
+                      )),
+
+                      // IP Range Configuration Card
+                      _buildCard(
+                        'Konfigurasi IP Range',
+                        [
+                          CustomTextField(
+                            label: 'IP Range Start *',
+                            controller: _ipRangeStartController,
+                            prefixIcon: Icons.router,
+                            keyboardType: TextInputType.text,
+                            validator: (value) => _validateIP(value, 'IP Range Start'),
+                            hintText: '192.168.1.10',
+                          ),
+                          SizedBox(height: ResponsiveHelper.getSpacing(
+                            context,
+                            mobile: 12,
+                            tablet: 16,
+                          )),
+                          CustomTextField(
+                            label: 'IP Range End *',
+                            controller: _ipRangeEndController,
+                            prefixIcon: Icons.router_outlined,
+                            keyboardType: TextInputType.text,
+                            validator: (value) => _validateIP(value, 'IP Range End'),
+                            hintText: '192.168.1.50',
                           ),
                         ],
                       ),
+
+                      SizedBox(height: ResponsiveHelper.getSpacing(
+                        context,
+                        mobile: 24,
+                        tablet: 32,
+                      )),
+
+                      // Submit Button
+                      CustomButton(
+                        text: widget.isEditMode ? 'Perbarui Ruangan' : 'Buat Ruangan',
+                        onPressed: _handleSubmit,
+                        isLoading: roomProvider.isLoading,
+                        icon: widget.isEditMode ? Icons.update : Icons.add,
+                      ),
+
+                      SizedBox(height: ResponsiveHelper.getSpacing(
+                        context,
+                        mobile: 16,
+                        tablet: 20,
+                      )),
                     ],
                   ),
-
-                  const SizedBox(height: 16),
-
-                  // IP Range Configuration Card
-                  _buildCard(
-                    'Konfigurasi IP Range',
-                    [
-                      CustomTextField(
-                        label: 'IP Range Start *',
-                        controller: _ipRangeStartController,
-                        prefixIcon: Icons.router,
-                        keyboardType: TextInputType.number,
-                        validator: (value) => _validateIP(value, 'IP Range Start'),
-                        hintText: '192.168.1.10',
-                      ),
-                      const SizedBox(height: 16),
-                      CustomTextField(
-                        label: 'IP Range End *',
-                        controller: _ipRangeEndController,
-                        prefixIcon: Icons.router_outlined,
-                        keyboardType: TextInputType.number,
-                        validator: (value) => _validateIP(value, 'IP Range End'),
-                        hintText: '192.168.1.50',
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Submit Button
-                  CustomButton(
-                    text: widget.isEditMode ? 'Perbarui Ruangan' : 'Buat Ruangan',
-                    onPressed: _handleSubmit,
-                    isLoading: roomProvider.isLoading,
-                    icon: widget.isEditMode ? Icons.update : Icons.add,
-                  ),
-
-                  const SizedBox(height: 16),
-                ],
+                ),
               ),
             ),
           );
@@ -307,26 +325,128 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
     );
   }
 
+  Widget _buildStatusToggle() {
+    final fontSize = ResponsiveHelper.getResponsiveFontSize(
+      context,
+      mobile: 14,
+      tablet: 16,
+      desktop: 16,
+    );
+
+    return context.isVerySmallScreen
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Status Ruangan',
+                style: TextStyle(
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+              SizedBox(height: ResponsiveHelper.getSpacing(context, mobile: 8)),
+              Row(
+                children: [
+                  Switch(
+                    value: _isActive,
+                    onChanged: (value) {
+                      setState(() {
+                        _isActive = value;
+                      });
+                    },
+                    activeColor: Colors.green,
+                  ),
+                  SizedBox(width: ResponsiveHelper.getSpacing(context, mobile: 8)),
+                  Text(
+                    _isActive ? 'Aktif' : 'Tidak Aktif',
+                    style: TextStyle(
+                      color: _isActive ? Colors.green : Colors.red,
+                      fontWeight: FontWeight.w500,
+                      fontSize: fontSize,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          )
+        : Row(
+            children: [
+              Text(
+                'Status Ruangan',
+                style: TextStyle(
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+              const Spacer(),
+              Switch(
+                value: _isActive,
+                onChanged: (value) {
+                  setState(() {
+                    _isActive = value;
+                  });
+                },
+                activeColor: Colors.green,
+              ),
+              SizedBox(width: ResponsiveHelper.getSpacing(context, mobile: 8)),
+              Text(
+                _isActive ? 'Aktif' : 'Tidak Aktif',
+                style: TextStyle(
+                  color: _isActive ? Colors.green : Colors.red,
+                  fontWeight: FontWeight.w500,
+                  fontSize: fontSize,
+                ),
+              ),
+            ],
+          );
+  }
+
   Widget _buildCard(String title, List<Widget> children) {
+    final titleFontSize = ResponsiveHelper.getResponsiveFontSize(
+      context,
+      mobile: 16,
+      tablet: 18,
+      desktop: 20,
+    );
+    final cardPadding = ResponsiveHelper.getResponsivePadding(
+      context,
+      mobileHorizontal: context.isVerySmallScreen ? 16 : 20,
+      mobileVertical: context.isVerySmallScreen ? 16 : 20,
+      tabletHorizontal: 24,
+      tabletVertical: 24,
+    );
+    final borderRadius = ResponsiveHelper.getBorderRadius(
+      context,
+      mobile: 8,
+      tablet: 12,
+      desktop: 16,
+    );
+
     return Card(
-      elevation: 2,
+      elevation: ResponsiveHelper.getCardElevation(context),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(borderRadius),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: cardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 18,
+              style: TextStyle(
+                fontSize: titleFontSize,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: ResponsiveHelper.getSpacing(
+              context,
+              mobile: 12,
+              tablet: 16,
+            )),
             ...children,
           ],
         ),
